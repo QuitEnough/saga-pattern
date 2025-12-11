@@ -1,7 +1,9 @@
 package by.javaguru.products.service.handler;
 
+import by.javaguru.core.command.CancelProductReservationCommand;
 import by.javaguru.core.command.ReservedProductCommand;
 import by.javaguru.core.dto.Product;
+import by.javaguru.core.event.ProductReservationCancelledEvent;
 import by.javaguru.core.event.ProductReservationFailedEvent;
 import by.javaguru.core.event.ProductReservedEvent;
 import by.javaguru.products.service.ProductService;
@@ -56,6 +58,21 @@ public class ProductCommandsHandler {
 
             kafkaTemplate.send(productEventsTopicName, productReservationFailedEvent);
         }
+    }
+
+    @KafkaHandler
+    public void handleCommand(@Payload CancelProductReservationCommand command) {
+        var productCancel = new Product(
+                command.productId(),
+                command.productQuantity()
+        );
+        productService.cancelReservation(productCancel, command.orderId());
+
+        var productReservationCancelledEvent = new ProductReservationCancelledEvent(
+                command.productId(),
+                command.orderId()
+        );
+        kafkaTemplate.send(productEventsTopicName, productReservationCancelledEvent);
     }
 
 }

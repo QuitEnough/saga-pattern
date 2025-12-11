@@ -1,6 +1,7 @@
 package by.javaguru.orders.service.handler;
 
 import by.javaguru.core.command.ApproveOrderCommand;
+import by.javaguru.core.command.RejectedOrderCommand;
 import by.javaguru.orders.service.OrderService;
 import org.springframework.kafka.annotation.KafkaHandler;
 import org.springframework.kafka.annotation.KafkaListener;
@@ -20,5 +21,10 @@ public class OrderCommandsHandler {
     @KafkaHandler
     public void handleCommand(@Payload ApproveOrderCommand approveOrderCommand) {
         orderService.approveOrder(approveOrderCommand.orderId());
+    }
+
+    @KafkaHandler
+    public void handleCommand(@Payload RejectedOrderCommand rejectedOrderCommand) {
+        orderService.rejectOrder(rejectedOrderCommand.orderId());
     }
 }

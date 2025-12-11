@@ -1,8 +1,8 @@
-package by.javaguru.core.event;
+package by.javaguru.core.command;
 
 import java.util.UUID;
 
-public record PaymentFailedEvent(
+public record CancelProductReservationCommand(
         UUID orderId,
         UUID productId,
         Integer productQuantity

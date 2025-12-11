@@ -1,12 +1,7 @@
 package by.javaguru.orders.saga;
 
-import by.javaguru.core.command.ApproveOrderCommand;
-import by.javaguru.core.command.ProcessPaymentCommand;
-import by.javaguru.core.command.ReservedProductCommand;
-import by.javaguru.core.event.OrderApprovedEvent;
-import by.javaguru.core.event.OrderCreatedEvent;
-import by.javaguru.core.event.PaymentProcessedEvent;
-import by.javaguru.core.event.ProductReservedEvent;
+import by.javaguru.core.command.*;
+import by.javaguru.core.event.*;
 import by.javaguru.core.types.OrderStatus;
 import by.javaguru.orders.service.OrderHistoryService;
 import org.springframework.beans.factory.annotation.Value;
@@ -76,6 +71,25 @@ public class OrderSaga {
     @KafkaHandler
     public void handleEvent(@Payload OrderApprovedEvent event) {
         orderHistoryService.add(event.orderId(), OrderStatus.APPROVED);
+    }
+
+    @KafkaHandler
+    public void handleEvent(@Payload PaymentFailedEvent event) {
+        CancelProductReservationCommand cancelProductReservationCommand =
+                new CancelProductReservationCommand(
+                        event.productId(),
+                        event.orderId(),
+                        event.productQuantity()
+                );
+        kafkaTemplate.send(productCommandsTopicName, cancelProductReservationCommand);
+    }
+
+    @KafkaHandler
+    public void handleEvent(@Payload ProductReservationCancelledEvent event) {
+        var rejectedOrderCommand = new RejectedOrderCommand(event.orderId());
+        kafkaTemplate.send(ordersCommandsTopicName, rejectedOrderCommand);
+
+        orderHistoryService.add(event.orderId(), OrderStatus.REJECTED);
     }
 
 }
